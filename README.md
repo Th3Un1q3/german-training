@@ -4,7 +4,7 @@ AI-powered German grammar training app built with React, TypeScript, and the Gem
 
 [Live Demo](https://th3un1q3.github.io/german-training/) · [GitHub](https://github.com/Th3Un1q3/german-training)
 
-![alt text](image.png)
+![alt text](image-1.png)
 
 </div>
 
