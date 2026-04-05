@@ -18,17 +18,13 @@ AI-powered German grammar training app built with React, TypeScript, and the Gem
 
 ## Run Locally
 
-**Prerequisites:** Node.js 18+
+The project includes a [devcontainer](https://containers.dev/) configuration — open it in **GitHub Codespaces** or **VS Code Dev Containers** and dependencies are installed automatically.
 
-1. Install dependencies:
-   ```sh
-   npm install
-   ```
-2. Start the dev server:
+1. Start the dev server:
    ```sh
    npm run dev
    ```
-3. Open the app and add your **Gemini API key** in Settings (gear icon).
+2. Open the app and add your **Gemini API key** in Settings (gear icon).
    You can get a free key at [aistudio.google.com/api-keys](https://aistudio.google.com/api-keys).
 
 ## Scripts
