@@ -1,10 +1,12 @@
+import { useState } from 'react';
 import { motion } from 'motion/react';
-import { BookOpen, ArrowRight, Loader2, Settings, X } from 'lucide-react';
+import { BookOpen, ArrowRight, Loader2, Settings, X, PenLine } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { getStoredApiKey } from '../lib/gemini';
 import { GitHubLink } from './GitHubLink';
+import { GRAMMAR_LEVELS } from '../data/grammarExercises';
 
-const DEFAULT_SUGGESTIONS = ['Dative Case', 'Accusative Case', 'Passive Voice', 'Modal Verbs', 'Subjunctive II'];
+const CUSTOM_TAB = 'custom';
 
 interface StartScreenProps {
   topic: string;
@@ -23,6 +25,15 @@ export function StartScreen({
   topic, totalExercises, loading, error, recentTopics,
   onTopicChange, onTotalExercisesChange, onStart, onRemoveTopic, onShowSettings,
 }: StartScreenProps) {
+  const [activeTab, setActiveTab] = useState(GRAMMAR_LEVELS[0].level);
+
+  const tabs = [
+    ...GRAMMAR_LEVELS.map(l => ({ key: l.level, label: l.level })),
+    { key: CUSTOM_TAB, label: 'Custom' },
+  ];
+
+  const activeLevel = GRAMMAR_LEVELS.find(l => l.level === activeTab);
+
   return (
     <div className="min-h-screen bg-[#0F0F0F] flex flex-col items-center justify-center p-6 font-sans">
       <motion.div
@@ -64,59 +75,95 @@ export function StartScreen({
           </div>
         )}
 
-        <p className="text-lg text-[#9A9A80] mb-6 italic">
-          What German grammar rule would you like to practice today?
-        </p>
-
-        <input
-          type="text"
-          value={topic}
-          onChange={(e) => onTopicChange(e.target.value)}
-          placeholder="e.g., Dative Case, Passive Voice..."
-          className="w-full px-6 py-4 bg-[#141414] border-none rounded-2xl text-xl mb-2 focus:ring-2 focus:ring-[#8A8A60] outline-none transition-all text-[#E5E5E0] placeholder-[#555]"
-        />
-
-        <div className="flex flex-wrap gap-2 mb-6">
-          {recentTopics.length > 0 && (
-            <span className="text-xs text-[#9A9A80] uppercase tracking-widest font-bold self-center mr-1">Recent</span>
-          )}
-          {recentTopics.map(t => (
-            <span
-              key={`recent-${t}`}
-              className={cn(
-                "inline-flex items-center gap-1 rounded-full text-sm transition-all",
-                topic === t ? "bg-[#8A8A60] text-white" : "bg-[#252525] text-[#9A9A80] hover:bg-[#303030]"
-              )}
-            >
-              <button onClick={() => onTopicChange(t)} className="pl-3 py-1">
-                {t}
-              </button>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onRemoveTopic(t);
-                  if (topic === t) onTopicChange('');
-                }}
-                className="pr-2 py-1 opacity-50 hover:opacity-100 transition-opacity"
-                title="Remove"
-              >
-                <X size={12} />
-              </button>
-            </span>
-          ))}
-          {DEFAULT_SUGGESTIONS.filter(t => !recentTopics.includes(t)).map(t => (
+        {/* Level tabs */}
+        <div className="flex gap-1 mb-4 overflow-x-auto pb-1">
+          {tabs.map(tab => (
             <button
-              key={t}
-              onClick={() => onTopicChange(t)}
+              key={tab.key}
+              onClick={() => setActiveTab(tab.key)}
               className={cn(
-                "px-3 py-1 rounded-full text-sm transition-all",
-                topic === t ? "bg-[#8A8A60] text-white" : "bg-[#252525] text-[#9A9A80] hover:bg-[#303030]"
+                "px-3 py-1.5 rounded-full text-sm font-bold whitespace-nowrap transition-all",
+                activeTab === tab.key
+                  ? "bg-[#8A8A60] text-white"
+                  : "bg-[#252525] text-[#9A9A80] hover:bg-[#303030]"
               )}
             >
-              {t}
+              {tab.key === CUSTOM_TAB ? <span className="flex items-center gap-1"><PenLine size={14} />{tab.label}</span> : tab.label}
             </button>
           ))}
         </div>
+
+        {/* Level name */}
+        {activeLevel && (
+          <p className="text-sm text-[#9A9A80] mb-3">
+            {activeLevel.level} – {activeLevel.name}
+          </p>
+        )}
+
+        {/* Exercise list for selected level */}
+        {activeLevel && (
+          <div className="max-h-52 overflow-y-auto mb-4 rounded-2xl bg-[#141414] p-2 space-y-0.5 scrollbar-thin">
+            {activeLevel.exercises.map(ex => (
+              <button
+                key={ex.id}
+                onClick={() => onTopicChange(ex.label)}
+                className={cn(
+                  "w-full text-left px-4 py-2.5 rounded-xl text-sm transition-all",
+                  topic === ex.label
+                    ? "bg-[#8A8A60] text-white font-bold"
+                    : "text-[#E5E5E0] hover:bg-[#252525]"
+                )}
+              >
+                {ex.label}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* Custom tab */}
+        {activeTab === CUSTOM_TAB && (
+          <div className="mb-4">
+            <p className="text-sm text-[#9A9A80] mb-3">
+              Enter any grammar rule or topic
+            </p>
+            <input
+              type="text"
+              value={topic}
+              onChange={(e) => onTopicChange(e.target.value)}
+              placeholder="e.g., Dative Case, Passive Voice..."
+              className="w-full px-6 py-4 bg-[#141414] border-none rounded-2xl text-xl mb-2 focus:ring-2 focus:ring-[#8A8A60] outline-none transition-all text-[#E5E5E0] placeholder-[#555]"
+            />
+            {recentTopics.length > 0 && (
+              <div className="flex flex-wrap gap-2 mt-2">
+                <span className="text-xs text-[#9A9A80] uppercase tracking-widest font-bold self-center mr-1">Recent</span>
+                {recentTopics.map(t => (
+                  <span
+                    key={`recent-${t}`}
+                    className={cn(
+                      "inline-flex items-center gap-1 rounded-full text-sm transition-all",
+                      topic === t ? "bg-[#8A8A60] text-white" : "bg-[#252525] text-[#9A9A80] hover:bg-[#303030]"
+                    )}
+                  >
+                    <button onClick={() => onTopicChange(t)} className="pl-3 py-1">
+                      {t}
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onRemoveTopic(t);
+                        if (topic === t) onTopicChange('');
+                      }}
+                      className="pr-2 py-1 opacity-50 hover:opacity-100 transition-opacity"
+                      title="Remove"
+                    >
+                      <X size={12} />
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
         <label className="block text-sm font-bold text-[#9A9A80] uppercase tracking-widest mb-2">Exercises per session</label>
         <input

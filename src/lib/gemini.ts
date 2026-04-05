@@ -232,8 +232,13 @@ export async function generateExercise(topic: string, usedSentences: string[] = 
 }
 
 export async function validateTranslation(topic: string, english: string, userGerman: string, expectedGerman?: string): Promise<ValidationResult> {
-  const expectedContext = expectedGerman
-    ? `Expected German Translation: "${expectedGerman}"\n    `
+  // Strip punctuation from expected answer — the UI doesn't support punctuation input,
+  // so the validator must never penalise missing commas, periods, etc.
+  const stripPunct = (s: string) => s.replace(/[.,!?;:"""''`…–—]/g, '').replace(/\s+/g, ' ').trim();
+  const cleanExpected = expectedGerman ? stripPunct(expectedGerman) : undefined;
+
+  const expectedContext = cleanExpected
+    ? `Expected German Translation: "${cleanExpected}"\n    `
     : '';
 
   const prompt = `
@@ -242,14 +247,14 @@ export async function validateTranslation(topic: string, english: string, userGe
     ${expectedContext}User's German Translation: "${userGerman}"
     
     Analyze the user's translation.
-    ${expectedGerman
-      ? `Compare the user's answer against the expected translation. The user must use the same words as the expected translation (ignore minor capitalization and punctuation differences). Do NOT accept alternative translations that use different words.`
-      : `Check if the translation is grammatically correct and conveys the same meaning.`
+    ${cleanExpected
+      ? `Compare the user's answer against the expected translation. The user must use the same words as the expected translation. Ignore ALL punctuation and capitalization — do NOT mark missing commas, periods, or any punctuation as errors. Do NOT accept alternative translations that use different words.`
+      : `Check if the translation is grammatically correct and conveys the same meaning. Ignore ALL punctuation — do NOT mark missing commas, periods, or any punctuation as errors.`
     }
-    1. Is it correct? (Allow minor punctuation/capitalization errors if the grammar and words match).
-    2. Provide the corrected version (use the expected translation if available).
+    1. Is it correct? (Ignore punctuation and capitalization entirely — only check words and grammar).
+    2. Provide the corrected version (use the expected translation if available, without punctuation).
     3. Explain the grammar rule applied here.
-    4. Highlight specific errors (word by word if possible).
+    4. Highlight specific errors (word by word if possible). Do NOT include punctuation-related errors.
   `;
 
   const response = await callWithRetry(() => getAI().models.generateContent({
