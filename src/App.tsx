@@ -579,7 +579,7 @@ export default function App() {
               </div>
               <h1 className="text-3xl font-bold text-[#E5E5E0]">{ruleInfo.title}</h1>
             </div>
-            <button onClick={() => setSessionConfig(null)} className="text-[#9A9A80] hover:text-[#E5E5E0]">Cancel</button>
+            <button onClick={() => resetSession()} className="text-[#9A9A80] hover:text-[#E5E5E0]">Cancel</button>
           </div>
 
           <div className="grid md:grid-cols-2 gap-8 mb-10">
@@ -647,7 +647,7 @@ export default function App() {
           <p className="text-xl text-[#9A9A80] mb-8">You scored {score} out of {sessionConfig.totalExercises}</p>
           
           <button 
-            onClick={() => setSessionConfig(null)}
+            onClick={() => resetSession()}
             className="w-full py-4 bg-[#8A8A60] text-white rounded-2xl font-bold hover:bg-[#9A9A70] transition-colors"
           >
             Start New Session
@@ -662,7 +662,7 @@ export default function App() {
       {settingsModal}
       <div className="max-w-4xl mx-auto">
         <header className="flex items-center justify-between mb-8">
-          <div className="flex items-center gap-3 cursor-pointer" onClick={() => setSessionConfig(null)}>
+          <div className="flex items-center gap-3 cursor-pointer" onClick={() => resetSession()}>
             <div className="w-10 h-10 bg-[#8A8A60] rounded-full flex items-center justify-center text-white">
               <BookOpen size={20} />
             </div>
