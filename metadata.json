@@ -1,0 +1,5 @@
+{
+  "name": "German Tutor",
+  "description": "An interactive German grammar training app using AI to generate exercises, transcribe speech, and provide detailed feedback on translations.",
+  "requestFramePermissions": ["microphone"]
+}
