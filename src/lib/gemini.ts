@@ -209,7 +209,7 @@ export async function generateExercise(topic: string, usedSentences: string[] = 
     const words = cleanGerman.split(/\s+/).filter(Boolean).map(stripPunctuation).filter(Boolean);
 
     // Build candidates: correct word + distractors, with safety fallbacks
-    const candidates = words.map((word, i) => {
+    const candidates = words.map((word: string, i: number) => {
       let dists: string[] = (item.distractors?.[i] || [])
         .map(stripPunctuation)
         .filter((d: string) => d && d !== word); // remove empty and duplicates of the correct word
