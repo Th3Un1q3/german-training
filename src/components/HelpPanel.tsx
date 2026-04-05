@@ -21,16 +21,16 @@ export function HelpPanel({ ruleInfo, onClose }: HelpPanelProps) {
         </div>
         <div className="grid md:grid-cols-2 gap-8">
           <div>
-            <p className="font-bold mb-2 text-sm uppercase tracking-widest opacity-70">Cheat Sheet</p>
+            <p className="font-bold mb-2 text-sm uppercase tracking-widest opacity-70">Quick Reference</p>
             <div className="space-y-4">
               <div>
-                <p className="font-bold text-sm">Use Cases</p>
+                <p className="font-bold text-sm">When to use</p>
                 <ul className="list-disc list-inside text-sm opacity-90">
                   {ruleInfo.cheatSheet.useCases.map((u, i) => <li key={i}>{u}</li>)}
                 </ul>
               </div>
               <div>
-                <p className="font-bold text-sm">Nuances</p>
+                <p className="font-bold text-sm">Watch out for</p>
                 <ul className="list-disc list-inside text-sm opacity-90">
                   {ruleInfo.cheatSheet.nuances.map((n, i) => <li key={i}>{n}</li>)}
                 </ul>

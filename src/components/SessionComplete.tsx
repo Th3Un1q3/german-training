@@ -1,6 +1,7 @@
 import { motion } from 'motion/react';
 import { Trophy } from 'lucide-react';
 import { SessionConfig, SessionResult } from '../types';
+import { GitHubLink } from './GitHubLink';
 
 interface SessionCompleteProps {
   sessionConfig: SessionConfig;
@@ -18,6 +19,9 @@ export function SessionComplete({ sessionConfig, results, onNewSession }: Sessio
         animate={{ opacity: 1, scale: 1 }}
         className="max-w-xl w-full bg-[#1A1A1A] rounded-[32px] p-10 shadow-xl border border-[#2A2A2A] text-center"
       >
+        <div className="flex justify-end mb-4">
+          <GitHubLink />
+        </div>
         <Trophy size={64} className="text-[#8A8A60] mx-auto mb-6" />
         <h2 className="text-4xl font-bold mb-2 text-[#E5E5E0]">Session Complete!</h2>
         <p className="text-xl text-[#9A9A80] mb-8">You scored {score} out of {sessionConfig.totalExercises}</p>

@@ -103,7 +103,7 @@ export default function App() {
       setSessionConfig({ topic, totalExercises, ruleInfo: info });
       setIsRuleReview(true);
     } catch (error: any) {
-      handleApiError(error, "Failed to generate rule info. Please try again.");
+      handleApiError(error, "Failed to load grammar rules. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -123,7 +123,7 @@ export default function App() {
       setUsedSentences(exercises.map(e => e.english));
       setIsRuleReview(false);
     } catch (error: any) {
-      handleApiError(error, "Failed to generate exercise. Please try again later.");
+      handleApiError(error, "Failed to load exercises. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -153,7 +153,7 @@ export default function App() {
           setExerciseQueue(exercises.slice(1));
           setUsedSentences(prev => [...prev, ...exercises.map(e => e.english)]);
         } catch (error: any) {
-          handleApiError(error, "Failed to generate exercise. Please try again later.");
+          handleApiError(error, "Failed to load exercises. Please try again.");
         } finally {
           setLoading(false);
         }

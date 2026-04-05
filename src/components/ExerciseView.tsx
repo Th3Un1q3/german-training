@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { BookOpen, Settings, HelpCircle, Mic, LayoutGrid, ChevronRight } from 'lucide-react';
+import { BookOpen, Settings, HelpCircle, Mic, LayoutGrid, ChevronRight, Loader2 } from 'lucide-react';
+import { GitHubLink } from './GitHubLink';
 import confetti from 'canvas-confetti';
 import { cn } from '../lib/utils';
 import { validateTranslation, transcribeAudio } from '../lib/gemini';
@@ -38,6 +39,7 @@ export function ExerciseView({
 
   const mediaRecorder = useRef<MediaRecorder | null>(null);
   const audioChunks = useRef<Blob[]>([]);
+  const mediaStream = useRef<MediaStream | null>(null);
 
   const busy = loading || validating;
 
@@ -48,6 +50,13 @@ export function ExerciseView({
     setScrambledWords([...currentExercise.words].sort(() => Math.random() - 0.5));
     setShuffledCandidates(currentExercise.candidates.map(c => [...c].sort(() => Math.random() - 0.5)));
   }, [currentExercise]);
+
+  // Clean up mic stream on unmount or mode change
+  useEffect(() => {
+    return () => {
+      mediaStream.current?.getTracks().forEach(t => t.stop());
+    };
+  }, []);
 
   const handleModeChange = (newMode: Mode) => {
     setMode(newMode);
@@ -61,12 +70,17 @@ export function ExerciseView({
   const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mediaStream.current = stream;
       mediaRecorder.current = new MediaRecorder(stream);
       audioChunks.current = [];
 
       mediaRecorder.current.ondataavailable = (e) => audioChunks.current.push(e.data);
 
       mediaRecorder.current.onstop = async () => {
+        // Release the mic immediately when recording stops
+        mediaStream.current?.getTracks().forEach(t => t.stop());
+        mediaStream.current = null;
+
         const audioBlob = new Blob(audioChunks.current, { type: 'audio/webm' });
         const reader = new FileReader();
         reader.readAsDataURL(audioBlob);
@@ -99,6 +113,10 @@ export function ExerciseView({
     if (mediaRecorder.current && isRecording) {
       mediaRecorder.current.stop();
       setIsRecording(false);
+    }
+    // Safety: ensure stream is released even if onstop hasn't fired yet
+    if (mediaStream.current) {
+      mediaStream.current.getTracks().forEach(t => t.stop());
     }
   };
 
@@ -166,6 +184,7 @@ export function ExerciseView({
             <span className="font-bold text-xl">German Tutor</span>
           </div>
           <div className="flex items-center gap-4">
+            <GitHubLink />
             <button
               onClick={onShowSettings}
               className="p-2 rounded-full bg-[#1A1A1A] border border-[#2A2A2A] text-[#9A9A80] hover:bg-[#252525] transition-all"
@@ -216,7 +235,7 @@ export function ExerciseView({
           className="bg-[#1A1A1A] rounded-[32px] p-8 shadow-lg border border-[#2A2A2A] mb-6"
         >
           <div className="mb-8">
-            <span className="text-xs uppercase tracking-widest text-[#9A9A80] opacity-60 font-sans font-bold">Translate</span>
+            <span className="text-xs uppercase tracking-widest text-[#9A9A80] opacity-60 font-sans font-bold">Translate to German</span>
             <h2 className="text-4xl font-medium mt-2 leading-tight text-[#E5E5E0]">
               {currentExercise.english}
             </h2>
@@ -225,8 +244,8 @@ export function ExerciseView({
           <div className="flex gap-2 mb-10 p-1 bg-[#141414] rounded-2xl w-fit">
             {([
               { id: 'speech' as Mode, icon: Mic, label: 'Speech' },
-              { id: 'scramble' as Mode, icon: LayoutGrid, label: 'Scramble' },
-              { id: 'one-by-one' as Mode, icon: ChevronRight, label: 'One-by-One' },
+              { id: 'scramble' as Mode, icon: LayoutGrid, label: 'Word Order' },
+              { id: 'one-by-one' as Mode, icon: ChevronRight, label: 'Word Pick' },
             ]).map(m => (
               <button
                 key={m.id}
@@ -276,6 +295,21 @@ export function ExerciseView({
             </AnimatePresence>
           </div>
         </motion.div>
+
+        {/* Checking indicator */}
+        <AnimatePresence>
+          {validating && !validation && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="flex items-center justify-center gap-3 py-6 text-[#9A9A80]"
+            >
+              <Loader2 className="animate-spin" size={20} />
+              <span className="text-sm font-medium">Checking your answer…</span>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Feedback */}
         <AnimatePresence>

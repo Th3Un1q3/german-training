@@ -1,6 +1,7 @@
 import { motion } from 'motion/react';
 import { Info, Loader2 } from 'lucide-react';
 import { RuleInfo } from '../types';
+import { GitHubLink } from './GitHubLink';
 
 interface RuleReviewProps {
   ruleInfo: RuleInfo;
@@ -24,21 +25,24 @@ export function RuleReview({ ruleInfo, loading, onStart, onCancel }: RuleReviewP
             </div>
             <h1 className="text-3xl font-bold text-[#E5E5E0]">{ruleInfo.title}</h1>
           </div>
-          <button onClick={onCancel} className="text-[#9A9A80] hover:text-[#E5E5E0]">Cancel</button>
+            <div className="flex items-center gap-2">
+              <GitHubLink />
+              <button onClick={onCancel} className="text-[#9A9A80] hover:text-[#E5E5E0]">Cancel</button>
+            </div>
         </div>
 
         <div className="grid md:grid-cols-2 gap-8 mb-10">
           <div>
-            <h3 className="text-sm font-bold text-[#9A9A80] uppercase tracking-widest mb-4">Cheat Sheet</h3>
+            <h3 className="text-sm font-bold text-[#9A9A80] uppercase tracking-widest mb-4">Quick Reference</h3>
             <div className="space-y-4">
               <div>
-                <p className="font-bold text-sm mb-1 text-[#E5E5E0]">Use Cases</p>
+                <p className="font-bold text-sm mb-1 text-[#E5E5E0]">When to use</p>
                 <ul className="list-disc list-inside text-[#9A9A80] text-sm space-y-1">
                   {ruleInfo.cheatSheet.useCases.map((u, i) => <li key={i}>{u}</li>)}
                 </ul>
               </div>
               <div>
-                <p className="font-bold text-sm mb-1 text-[#E5E5E0]">Nuances</p>
+                <p className="font-bold text-sm mb-1 text-[#E5E5E0]">Watch out for</p>
                 <ul className="list-disc list-inside text-[#9A9A80] text-sm space-y-1">
                   {ruleInfo.cheatSheet.nuances.map((n, i) => <li key={i}>{n}</li>)}
                 </ul>
@@ -60,9 +64,9 @@ export function RuleReview({ ruleInfo, loading, onStart, onCancel }: RuleReviewP
         </div>
 
         <div className="p-6 bg-[#8A8A60]/10 rounded-2xl mb-10 border border-[#8A8A60]/15">
-          <h3 className="text-sm font-bold text-[#9A9A80] uppercase tracking-widest mb-2">Exercise Design</h3>
+            <h3 className="text-sm font-bold text-[#9A9A80] uppercase tracking-widest mb-2">What you'll practice</h3>
           <p className="text-sm text-[#9A9A80] mb-2"><strong className="text-[#E5E5E0]">Focus:</strong> {ruleInfo.exerciseDesign.focusAreas.join(', ')}</p>
-          <p className="text-sm text-[#9A9A80]"><strong className="text-[#E5E5E0]">Progression:</strong> {ruleInfo.exerciseDesign.difficultyProgression}</p>
+          <p className="text-sm text-[#9A9A80]"><strong className="text-[#E5E5E0]">Difficulty:</strong> {ruleInfo.exerciseDesign.difficultyProgression}</p>
         </div>
 
         <button

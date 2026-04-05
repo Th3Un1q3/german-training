@@ -2,6 +2,7 @@ import { motion } from 'motion/react';
 import { BookOpen, ArrowRight, Loader2, Settings, X } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { getStoredApiKey } from '../lib/gemini';
+import { GitHubLink } from './GitHubLink';
 
 const DEFAULT_SUGGESTIONS = ['Dative Case', 'Accusative Case', 'Passive Voice', 'Modal Verbs', 'Subjunctive II'];
 
@@ -36,13 +37,16 @@ export function StartScreen({
             </div>
             <h1 className="text-3xl font-bold text-[#E5E5E0]">German Tutor</h1>
           </div>
-          <button
-            onClick={onShowSettings}
-            className="p-2 rounded-full bg-[#1A1A1A] border border-[#2A2A2A] text-[#9A9A80] hover:bg-[#252525] transition-all"
-            title="Settings"
-          >
-            <Settings size={20} />
-          </button>
+          <div className="flex items-center gap-2">
+            <GitHubLink />
+            <button
+              onClick={onShowSettings}
+              className="p-2 rounded-full bg-[#1A1A1A] border border-[#2A2A2A] text-[#9A9A80] hover:bg-[#252525] transition-all"
+              title="Settings"
+            >
+              <Settings size={20} />
+            </button>
+          </div>
         </div>
 
         {!getStoredApiKey() && (
@@ -114,7 +118,7 @@ export function StartScreen({
           ))}
         </div>
 
-        <label className="block text-sm font-bold text-[#9A9A80] uppercase tracking-widest mb-2">Number of sentences</label>
+        <label className="block text-sm font-bold text-[#9A9A80] uppercase tracking-widest mb-2">Exercises per session</label>
         <input
           type="number"
           min="1"

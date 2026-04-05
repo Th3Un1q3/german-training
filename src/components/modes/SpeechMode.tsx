@@ -36,7 +36,7 @@ export function SpeechMode({ isRecording, disabled, onStartRecording, onStopReco
         {isRecording ? <MicOff size={32} className="text-white" /> : <Mic size={32} className="text-white" />}
       </button>
       <p className="text-[#9A9A80] italic">
-        {isRecording ? "Listening..." : "Hold to speak in German"}
+        {isRecording ? "Listening..." : "Hold to record your answer"}
       </p>
     </motion.div>
   );
