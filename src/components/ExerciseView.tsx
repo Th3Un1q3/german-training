@@ -5,7 +5,7 @@ import { GitHubLink } from './GitHubLink';
 import confetti from 'canvas-confetti';
 import { cn } from '../lib/utils';
 import { validateTranslation, transcribeAudio } from '../lib/gemini';
-import { Exercise, Mode, ValidationResult, SessionConfig } from '../types';
+import { Exercise, Mode, ValidationResult, SessionConfig, SessionResult } from '../types';
 import { HelpPanel } from './HelpPanel';
 import { Feedback } from './Feedback';
 import { SpeechMode } from './modes/SpeechMode';
@@ -16,6 +16,7 @@ interface ExerciseViewProps {
   sessionConfig: SessionConfig;
   currentExercise: Exercise;
   currentExerciseIndex: number;
+  results: SessionResult[];
   loading: boolean;
   validation: ValidationResult | null;
   onSetValidation: (v: ValidationResult | null) => void;
@@ -25,7 +26,7 @@ interface ExerciseViewProps {
 }
 
 export function ExerciseView({
-  sessionConfig, currentExercise, currentExerciseIndex, loading, validation,
+  sessionConfig, currentExercise, currentExerciseIndex, results, loading, validation,
   onSetValidation, onNextExercise, onResetSession, onShowSettings,
 }: ExerciseViewProps) {
   const [mode, setMode] = useState<Mode>('scramble');
@@ -212,12 +213,23 @@ export function ExerciseView({
         </header>
 
         {/* Progress Bar */}
-        <div className="w-full h-2 bg-[#2A2A2A] rounded-full mb-8 overflow-hidden">
-          <motion.div
-            className={cn("h-full", validation ? (validation.isCorrect ? "bg-green-500" : "bg-red-500") : "bg-[#8A8A60]")}
-            initial={{ width: `${(currentExerciseIndex / sessionConfig.totalExercises) * 100}%` }}
-            animate={{ width: `${((currentExerciseIndex + (validation ? 1 : 0)) / sessionConfig.totalExercises) * 100}%` }}
-          />
+        <div className="flex gap-1 w-full mb-8">
+          {Array.from({ length: sessionConfig.totalExercises }, (_, i) => {
+            let bg = 'bg-[#2A2A2A]';
+            if (i < results.length) {
+              bg = results[i].validation.isCorrect ? 'bg-green-500' : 'bg-red-500';
+            } else if (i === currentExerciseIndex) {
+              bg = validation
+                ? (validation.isCorrect ? 'bg-green-500' : 'bg-red-500')
+                : 'bg-[#8A8A60]';
+            }
+            return (
+              <div
+                key={i}
+                className={cn('h-2 rounded-full flex-1 transition-colors duration-300', bg)}
+              />
+            );
+          })}
         </div>
 
         {/* Help Panel */}

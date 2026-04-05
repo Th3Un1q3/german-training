@@ -233,6 +233,7 @@ export default function App() {
         sessionConfig={sessionConfig}
         currentExercise={currentExercise}
         currentExerciseIndex={currentExerciseIndex}
+        results={results}
         loading={loading}
         validation={validation}
         onSetValidation={setValidation}
