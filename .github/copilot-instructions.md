@@ -46,6 +46,18 @@ description: "Workspace instructions for AI assistants working on this Vite + Re
 - **Dev container updates**: To update global tools (Node, npm, etc.), modify `.devcontainer/devcontainer.json` (e.g. `postCreateCommand`). Do **not** run `npm install -g` interactively — those changes are lost on container rebuild.
 - **Do not**: Add or change secrets, modify production infra, or add server-side components.
 
+**CI / GitHub Actions**
+- **Devcontainer in CI**: Always use the `devcontainers/ci@v0.3` action to run commands inside the devcontainer. Never reference the devcontainer image directly via the `container:` key — that skips `devcontainer.json` (including `postCreateCommand`) and defeats the purpose of a devcontainer.
+- **Correct pattern**:
+  ```yaml
+  - uses: actions/checkout@v6
+  - uses: devcontainers/ci@v0.3
+    with:
+      runCmd: npm ci && npm run lint && npm run build
+  ```
+- **Passing env vars into the container**: use both the job-level `env:` block and the action's `env:` input (list the variable names to forward), e.g. `env: BASE_PATH`.
+- **Post-build host steps** (e.g. `actions/upload-pages-artifact`, `actions/deploy-pages`) run normally outside the container after the `devcontainers/ci` step.
+
 **Guidance for PRs**
 - **Scope PRs**: Keep changes small and focused (one feature/bug per PR).
 - **Testing**: There are no test frameworks — validate with `npm run lint && npm run build`.
