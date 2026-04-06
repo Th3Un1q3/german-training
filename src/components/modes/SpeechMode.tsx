@@ -1,4 +1,3 @@
-import { useCallback, useRef } from 'react';
 import { motion } from 'motion/react';
 import { Mic, MicOff } from 'lucide-react';
 import { cn } from '../../lib/utils';
@@ -6,36 +5,10 @@ import { cn } from '../../lib/utils';
 interface SpeechModeProps {
   isRecording: boolean;
   disabled: boolean;
-  onStartRecording: () => void;
-  onStopRecording: () => void;
+  onToggleRecording: () => void;
 }
 
-export function SpeechMode({ isRecording, disabled, onStartRecording, onStopRecording }: SpeechModeProps) {
-  const isTouchDevice = useRef(false);
-
-  const handleTouchStart = useCallback((e: React.TouchEvent) => {
-    if (disabled) return;
-    e.preventDefault();
-    isTouchDevice.current = true;
-    onStartRecording();
-  }, [disabled, onStartRecording]);
-
-  const handleTouchEnd = useCallback((e: React.TouchEvent) => {
-    if (disabled) return;
-    e.preventDefault();
-    onStopRecording();
-  }, [disabled, onStopRecording]);
-
-  const handleMouseDown = useCallback(() => {
-    if (disabled || isTouchDevice.current) return;
-    onStartRecording();
-  }, [disabled, onStartRecording]);
-
-  const handleMouseUp = useCallback(() => {
-    if (disabled || isTouchDevice.current) return;
-    onStopRecording();
-  }, [disabled, onStopRecording]);
-
+export function SpeechMode({ isRecording, disabled, onToggleRecording }: SpeechModeProps) {
   return (
     <motion.div
       key="speech"
@@ -45,15 +18,9 @@ export function SpeechMode({ isRecording, disabled, onStartRecording, onStopReco
       className="flex flex-col items-center justify-center gap-6 py-10"
     >
       <button
-        onMouseDown={handleMouseDown}
-        onMouseUp={handleMouseUp}
-        onMouseLeave={handleMouseUp}
-        onTouchStart={handleTouchStart}
-        onTouchEnd={handleTouchEnd}
-        onTouchCancel={handleTouchEnd}
-        onContextMenu={(e) => e.preventDefault()}
+        onClick={!disabled ? onToggleRecording : undefined}
         className={cn(
-          "w-24 h-24 rounded-full flex items-center justify-center transition-all duration-300 touch-none select-none",
+          "w-24 h-24 rounded-full flex items-center justify-center transition-all duration-300 select-none",
           disabled
             ? "opacity-50 cursor-not-allowed bg-gray-700"
             : isRecording
@@ -64,7 +31,7 @@ export function SpeechMode({ isRecording, disabled, onStartRecording, onStopReco
         {isRecording ? <MicOff size={32} className="text-white" /> : <Mic size={32} className="text-white" />}
       </button>
       <p className="text-[#9A9A80] italic">
-        {isRecording ? "Listening..." : "Hold to record your answer"}
+        {isRecording ? "Listening... tap to stop" : "Tap to record your answer"}
       </p>
     </motion.div>
   );

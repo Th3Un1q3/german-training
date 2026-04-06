@@ -281,8 +281,7 @@ export function ExerciseView({
                 <SpeechMode
                   isRecording={isRecording}
                   disabled={busy || !!validation}
-                  onStartRecording={startRecording}
-                  onStopRecording={stopRecording}
+                  onToggleRecording={isRecording ? stopRecording : startRecording}
                 />
               )}
               {mode === 'scramble' && (
