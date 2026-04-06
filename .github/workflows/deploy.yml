@@ -17,16 +17,14 @@ concurrency:
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
+    container: mcr.microsoft.com/devcontainers/typescript-node:24
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v6
 
-      - uses: actions/setup-node@v6
-        with:
-          node-version: 22
-          cache: npm
+      - run: npm install -g npm@11
 
       - run: npm ci
 
