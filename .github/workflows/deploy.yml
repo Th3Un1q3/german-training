@@ -17,20 +17,18 @@ concurrency:
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
-    container: mcr.microsoft.com/devcontainers/typescript-node:24
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v6
 
-      - run: npm install -g npm@11
-
-      - run: npm ci
-
-      - run: npm run build
+      - uses: devcontainers/ci@v0.3
         env:
           BASE_PATH: /${{ github.event.repository.name }}/
+        with:
+          runCmd: npm ci && npm run build
+          env: BASE_PATH
 
       - uses: actions/configure-pages@v6
 
