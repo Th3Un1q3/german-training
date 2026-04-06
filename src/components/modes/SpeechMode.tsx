@@ -1,3 +1,4 @@
+import { useCallback, useRef } from 'react';
 import { motion } from 'motion/react';
 import { Mic, MicOff } from 'lucide-react';
 import { cn } from '../../lib/utils';
@@ -10,6 +11,31 @@ interface SpeechModeProps {
 }
 
 export function SpeechMode({ isRecording, disabled, onStartRecording, onStopRecording }: SpeechModeProps) {
+  const isTouchDevice = useRef(false);
+
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    if (disabled) return;
+    e.preventDefault();
+    isTouchDevice.current = true;
+    onStartRecording();
+  }, [disabled, onStartRecording]);
+
+  const handleTouchEnd = useCallback((e: React.TouchEvent) => {
+    if (disabled) return;
+    e.preventDefault();
+    onStopRecording();
+  }, [disabled, onStopRecording]);
+
+  const handleMouseDown = useCallback(() => {
+    if (disabled || isTouchDevice.current) return;
+    onStartRecording();
+  }, [disabled, onStartRecording]);
+
+  const handleMouseUp = useCallback(() => {
+    if (disabled || isTouchDevice.current) return;
+    onStopRecording();
+  }, [disabled, onStopRecording]);
+
   return (
     <motion.div
       key="speech"
@@ -19,13 +45,15 @@ export function SpeechMode({ isRecording, disabled, onStartRecording, onStopReco
       className="flex flex-col items-center justify-center gap-6 py-10"
     >
       <button
-        onMouseDown={!disabled ? onStartRecording : undefined}
-        onMouseUp={!disabled ? onStopRecording : undefined}
-        onMouseLeave={!disabled ? onStopRecording : undefined}
-        onTouchStart={!disabled ? onStartRecording : undefined}
-        onTouchEnd={!disabled ? onStopRecording : undefined}
+        onMouseDown={handleMouseDown}
+        onMouseUp={handleMouseUp}
+        onMouseLeave={handleMouseUp}
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+        onTouchCancel={handleTouchEnd}
+        onContextMenu={(e) => e.preventDefault()}
         className={cn(
-          "w-24 h-24 rounded-full flex items-center justify-center transition-all duration-300",
+          "w-24 h-24 rounded-full flex items-center justify-center transition-all duration-300 touch-none select-none",
           disabled
             ? "opacity-50 cursor-not-allowed bg-gray-700"
             : isRecording
