@@ -43,6 +43,7 @@ description: "Workspace instructions for AI assistants working on this Vite + Re
 - **Local tasks**: Modify components, add UI features, update types, fix lint/TS errors.
 - **AI-specific**: Audit or extend `src/lib/gemini.ts`, adjust prompts, improve post-processing.
 - **Always validate**: Run `npm run lint && npm run build` after every code change. Do not mark work as done until both pass.
+- **Dev container updates**: To update global tools (Node, npm, etc.), modify `.devcontainer/devcontainer.json` (e.g. `postCreateCommand`). Do **not** run `npm install -g` interactively — those changes are lost on container rebuild.
 - **Do not**: Add or change secrets, modify production infra, or add server-side components.
 
 **Guidance for PRs**

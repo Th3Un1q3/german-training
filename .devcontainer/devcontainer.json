@@ -1,7 +1,7 @@
 {
   "name": "German Tutor",
-  "image": "mcr.microsoft.com/devcontainers/typescript-node:22",
-  "postCreateCommand": "npm install --ignore-scripts",
+  "image": "mcr.microsoft.com/devcontainers/typescript-node:24",
+  "postCreateCommand": "npm install -g npm@11 && npm install --ignore-scripts",
   "forwardPorts": [3000],
   "customizations": {
     "vscode": {
