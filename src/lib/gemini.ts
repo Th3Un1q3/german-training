@@ -300,6 +300,7 @@ export async function validateTranslation(topic: string, english: string, userGe
   const result: ValidationResult = JSON.parse(response.text || "{}");
 
   const grammarErrors = result.highlightedErrors.filter(err => {
+    if (!err.error) return false;
     const msg = err.error.toLowerCase();
     return !/\b(comma|period|full stop|punctuation|komma|punkt|satzzeichen|interpunktion)\b/.test(msg);
   })

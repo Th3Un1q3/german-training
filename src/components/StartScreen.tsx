@@ -25,7 +25,7 @@ export function StartScreen({
   topic, totalExercises, loading, error, recentTopics,
   onTopicChange, onTotalExercisesChange, onStart, onRemoveTopic, onShowSettings,
 }: StartScreenProps) {
-  const [activeTab, setActiveTab] = useState(GRAMMAR_LEVELS[0].level);
+  const [activeTab, setActiveTab] = useState(CUSTOM_TAB);
 
   const tabs = [
     ...GRAMMAR_LEVELS.map(l => ({ key: l.level, label: l.level })),
