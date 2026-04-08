@@ -180,6 +180,9 @@ export async function generateExercise(topic: string, usedSentences: string[] = 
               items: {
                 type: Type.ARRAY,
                 items: { type: Type.STRING },
+                // Require exactly 5 distractors for each word
+                minItems: 5,
+                maxItems: 5,
                 description: "Array of 5 distractors for the word at this position."
               }
             }
@@ -241,27 +244,29 @@ export async function validateTranslation(topic: string, english: string, userGe
   // Short-circuit: if the words match exactly (ignoring punctuation & case), it's
   // definitively correct — skip the AI call entirely so it can't hallucinate
   // punctuation errors the user had no way to enter.
-  if (cleanUser.toLowerCase() === cleanExpected.toLowerCase()) {
+
+  const isExactMatch = cleanUser.toLowerCase() === cleanExpected.toLowerCase();
+
+  if (isExactMatch) {
     return {
       isCorrect: true,
-      correction: cleanUser,
+      correction: expectedGerman,
       explanation: '',
       highlightedErrors: [],
     };
   }
 
   const prompt = `
+    Analyze the user's translation.
+    Compare the user's answer against the expected translation. The user must use the same words as the expected translation. Ignore ALL punctuation and capitalization — do NOT mark missing commas, periods, or any punctuation as errors. Do NOT accept alternative translations that use different words.
+    1. Is it correct? (Ignore punctuation and capitalization entirely — only check words and grammar).
+    2. Explain the grammar rule applied here.
+    4. Highlight specific errors (word by word if possible). Do NOT include punctuation-related errors.
+
     Topic: ${topic}
     English Sentence: "${english}"
     Expected German Translation: "${cleanExpected}"
     User's German Translation: "${userGerman}"
-    
-    Analyze the user's translation.
-    Compare the user's answer against the expected translation. The user must use the same words as the expected translation. Ignore ALL punctuation and capitalization — do NOT mark missing commas, periods, or any punctuation as errors. Do NOT accept alternative translations that use different words.
-    1. Is it correct? (Ignore punctuation and capitalization entirely — only check words and grammar).
-    2. Provide the corrected version (use the expected translation, without punctuation).
-    3. Explain the grammar rule applied here.
-    4. Highlight specific errors (word by word if possible). Do NOT include punctuation-related errors.
   `;
 
   const response = await callWithRetry(() => getAI().models.generateContent({
@@ -273,7 +278,6 @@ export async function validateTranslation(topic: string, english: string, userGe
         type: Type.OBJECT,
         properties: {
           isCorrect: { type: Type.BOOLEAN },
-          correction: { type: Type.STRING },
           explanation: { type: Type.STRING },
           highlightedErrors: {
             type: Type.ARRAY,
@@ -286,29 +290,25 @@ export async function validateTranslation(topic: string, english: string, userGe
             }
           }
         },
-        required: ["isCorrect", "correction", "explanation", "highlightedErrors"]
+        required: ["isCorrect", "explanation", "highlightedErrors"]
       }
     }
   }));
 
   const result: ValidationResult = JSON.parse(response.text || "{}");
 
-  // Post-process: strip punctuation from correction so it matches the UI format
-  result.correction = stripPunct(result.correction);
-
-  // Filter out any punctuation-related errors the AI sneaked in
-  result.highlightedErrors = result.highlightedErrors.filter(err => {
+  const grammarErrors = result.highlightedErrors.filter(err => {
     const msg = err.error.toLowerCase();
     return !/\b(comma|period|full stop|punctuation|komma|punkt|satzzeichen|interpunktion)\b/.test(msg);
-  });
+  })
 
-  // If no real errors remain and correction matches user input, override to correct
-  if (!result.isCorrect && result.highlightedErrors.length === 0
-      && result.correction.toLowerCase() === cleanUser.toLowerCase()) {
-    result.isCorrect = true;
+  return {
+    highlightedErrors: grammarErrors,
+    isCorrect: result.isCorrect || grammarErrors.length === 0, // If AI marked it incorrect but there are no grammar errors (only punctuation), treat as correct
+    correction: expectedGerman,
+    explanation: result.explanation || "No explanation provided.",
+    transcription: result.transcription || undefined,
   }
-
-  return result;
 }
 
 export async function listAvailableModels(): Promise<string[]> {

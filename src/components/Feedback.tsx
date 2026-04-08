@@ -39,7 +39,7 @@ export function Feedback({ validation, userAnswer, onNext }: FeedbackProps) {
         <div className="mb-6">
           <span className="text-xs uppercase font-bold tracking-widest opacity-60 block mb-2 text-[#9A9A80]">Your answer</span>
           {validation.isCorrect
-            ? <p className="text-xl text-green-300/80">{userAnswer}</p>
+            ? <p className="text-xl text-green-300/80">{validation.correction}</p>
             : <p className="text-xl text-red-300/80 line-through decoration-red-500/40">{userAnswer}</p>
           }
         </div>
