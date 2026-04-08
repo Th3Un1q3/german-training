@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { generateExercise, generateRuleInfo, getStoredApiKey, setStoredApiKey, getStoredModel, setStoredModel, getStoredBaseUrl, setStoredBaseUrl, listAvailableModels } from './lib/gemini';
 import { Exercise, ValidationResult, SessionConfig, SessionResult } from './types';
 import { useRecentTopics } from './hooks/useRecentTopics';
@@ -35,6 +35,9 @@ export default function App() {
   const [modelsLoading, setModelsLoading] = useState(false);
 
   const { recentTopics, addTopic, removeTopic } = useRecentTopics();
+
+  // Prevents concurrent background preload fetches
+  const preloadingRef = useRef(false);
 
   // --- Helpers ---
   const resetSession = () => {
@@ -85,6 +88,52 @@ export default function App() {
     if (showSettings) fetchModels();
   }, [showSettings]);
 
+  // --- Preloading ---
+  // How many exercises to keep loaded and ready ahead of the user.
+  const PRELOAD_BUFFER = 3;
+
+  // Trigger a background fetch only when the number of loaded-but-unanswered
+  // exercises (current + queue) is below the buffer OR below what's needed to
+  // finish the session — whichever is smaller.
+  const triggerPreload = (currentQueue: Exercise[], used: string[]) => {
+    if (preloadingRef.current || !sessionConfig) return;
+
+    const answered = results.length; // exercises already completed
+    const remaining = sessionConfig.totalExercises - answered;
+    // +1 for the current exercise shown to the user (not yet in results)
+    const loadedAhead = (currentExercise ? 1 : 0) + currentQueue.length;
+    const needed = Math.min(PRELOAD_BUFFER, remaining) - loadedAhead;
+
+    if (needed <= 0) return;
+
+    // Always fetch a full PRELOAD_BUFFER batch (capped at remaining) so we
+    // don't make many tiny single-exercise fetches when the buffer is nearly full.
+    const batchSize = Math.min(PRELOAD_BUFFER, remaining);
+
+    preloadingRef.current = true;
+    generateExercise(sessionConfig.topic, used, batchSize, sessionConfig.ruleInfo)
+      .then(exercises => {
+        setExerciseQueue(q => [...q, ...exercises]);
+        setUsedSentences(prev => [...new Set([...prev, ...exercises.map(e => e.english)])]);
+      })
+      .catch(() => {}) // silent — demand-path fallbacks handle errors
+      .finally(() => { preloadingRef.current = false; });
+  };
+
+  // Preload while the user reads the rule review page
+  useEffect(() => {
+    if (!isRuleReview || !sessionConfig) return;
+    triggerPreload(exerciseQueue, usedSentences);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isRuleReview]);
+
+  // Preload next exercises as soon as feedback is shown (user is reading result)
+  useEffect(() => {
+    if (!validation || !sessionConfig) return;
+    triggerPreload(exerciseQueue, usedSentences);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [validation]);
+
   const saveSettings = () => {
     setStoredApiKey(settingsApiKey);
     setStoredModel(settingsModel);
@@ -110,22 +159,30 @@ export default function App() {
   };
 
   const startExercises = async () => {
-    setLoading(true);
     setError(null);
     setResults([]);
     setCurrentExerciseIndex(0);
     setIsSessionComplete(false);
-    setUsedSentences([]);
-    try {
-      const exercises = await generateExercise(topic, [], 3, sessionConfig?.ruleInfo);
-      setCurrentExercise(exercises[0]);
-      setExerciseQueue(exercises.slice(1));
-      setUsedSentences(exercises.map(e => e.english));
-      setIsRuleReview(false);
-    } catch (error: any) {
-      handleApiError(error, "Failed to load exercises. Please try again.");
-    } finally {
-      setLoading(false);
+    setIsRuleReview(false);
+
+    if (exerciseQueue.length > 0) {
+      // Preloaded during rule review — instant start, no spinner
+      const [first, ...rest] = exerciseQueue;
+      setCurrentExercise(first);
+      setExerciseQueue(rest);
+    } else {
+      // Preload didn't finish in time — generate now (fallback)
+      setLoading(true);
+      try {
+        const exercises = await generateExercise(topic, usedSentences, 3, sessionConfig?.ruleInfo);
+        setCurrentExercise(exercises[0]);
+        setExerciseQueue(exercises.slice(1));
+        setUsedSentences(exercises.map(e => e.english));
+      } catch (error: any) {
+        handleApiError(error, "Failed to load exercises. Please try again.");
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
@@ -136,22 +193,23 @@ export default function App() {
     if (newResults.length >= sessionConfig!.totalExercises) {
       setIsSessionComplete(true);
     } else {
-      setLoading(true);
-      setError(null);
       setValidation(null);
       setCurrentExerciseIndex(prev => prev + 1);
+      setError(null);
 
       const newQueue = [...exerciseQueue];
       if (newQueue.length > 0) {
+        // Preloaded — advance instantly without any loading state
         setCurrentExercise(newQueue.shift()!);
         setExerciseQueue(newQueue);
-        setLoading(false);
       } else {
+        // Preload didn't finish in time — generate now (fallback)
+        setLoading(true);
         try {
           const exercises = await generateExercise(sessionConfig!.topic, usedSentences, 3, sessionConfig?.ruleInfo);
           setCurrentExercise(exercises[0]);
           setExerciseQueue(exercises.slice(1));
-          setUsedSentences(prev => [...prev, ...exercises.map(e => e.english)]);
+          setUsedSentences(prev => [...new Set([...prev, ...exercises.map(e => e.english)])]);
         } catch (error: any) {
           handleApiError(error, "Failed to load exercises. Please try again.");
         } finally {

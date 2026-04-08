@@ -170,6 +170,8 @@ export async function generateExercise(topic: string, usedSentences: string[] = 
       responseMimeType: "application/json",
       responseSchema: {
         type: Type.ARRAY,
+        minItems: count,
+        maxItems: count,
         items: {
           type: Type.OBJECT,
           properties: {
