@@ -231,28 +231,35 @@ export async function generateExercise(topic: string, usedSentences: string[] = 
   });
 }
 
-export async function validateTranslation(topic: string, english: string, userGerman: string, expectedGerman?: string): Promise<ValidationResult> {
-  // Strip punctuation from expected answer — the UI doesn't support punctuation input,
+export async function validateTranslation(topic: string, english: string, userGerman: string, expectedGerman: string): Promise<ValidationResult> {
+  // Strip punctuation — the UI doesn't support punctuation input,
   // so the validator must never penalise missing commas, periods, etc.
   const stripPunct = (s: string) => s.replace(/[.,!?;:"""''`…–—]/g, '').replace(/\s+/g, ' ').trim();
-  const cleanExpected = expectedGerman ? stripPunct(expectedGerman) : undefined;
+  const cleanExpected = stripPunct(expectedGerman);
+  const cleanUser = stripPunct(userGerman);
 
-  const expectedContext = cleanExpected
-    ? `Expected German Translation: "${cleanExpected}"\n    `
-    : '';
+  // Short-circuit: if the words match exactly (ignoring punctuation & case), it's
+  // definitively correct — skip the AI call entirely so it can't hallucinate
+  // punctuation errors the user had no way to enter.
+  if (cleanUser.toLowerCase() === cleanExpected.toLowerCase()) {
+    return {
+      isCorrect: true,
+      correction: cleanUser,
+      explanation: '',
+      highlightedErrors: [],
+    };
+  }
 
   const prompt = `
     Topic: ${topic}
     English Sentence: "${english}"
-    ${expectedContext}User's German Translation: "${userGerman}"
+    Expected German Translation: "${cleanExpected}"
+    User's German Translation: "${userGerman}"
     
     Analyze the user's translation.
-    ${cleanExpected
-      ? `Compare the user's answer against the expected translation. The user must use the same words as the expected translation. Ignore ALL punctuation and capitalization — do NOT mark missing commas, periods, or any punctuation as errors. Do NOT accept alternative translations that use different words.`
-      : `Check if the translation is grammatically correct and conveys the same meaning. Ignore ALL punctuation — do NOT mark missing commas, periods, or any punctuation as errors.`
-    }
+    Compare the user's answer against the expected translation. The user must use the same words as the expected translation. Ignore ALL punctuation and capitalization — do NOT mark missing commas, periods, or any punctuation as errors. Do NOT accept alternative translations that use different words.
     1. Is it correct? (Ignore punctuation and capitalization entirely — only check words and grammar).
-    2. Provide the corrected version (use the expected translation if available, without punctuation).
+    2. Provide the corrected version (use the expected translation, without punctuation).
     3. Explain the grammar rule applied here.
     4. Highlight specific errors (word by word if possible). Do NOT include punctuation-related errors.
   `;
@@ -284,7 +291,24 @@ export async function validateTranslation(topic: string, english: string, userGe
     }
   }));
 
-  return JSON.parse(response.text || "{}");
+  const result: ValidationResult = JSON.parse(response.text || "{}");
+
+  // Post-process: strip punctuation from correction so it matches the UI format
+  result.correction = stripPunct(result.correction);
+
+  // Filter out any punctuation-related errors the AI sneaked in
+  result.highlightedErrors = result.highlightedErrors.filter(err => {
+    const msg = err.error.toLowerCase();
+    return !/\b(comma|period|full stop|punctuation|komma|punkt|satzzeichen|interpunktion)\b/.test(msg);
+  });
+
+  // If no real errors remain and correction matches user input, override to correct
+  if (!result.isCorrect && result.highlightedErrors.length === 0
+      && result.correction.toLowerCase() === cleanUser.toLowerCase()) {
+    result.isCorrect = true;
+  }
+
+  return result;
 }
 
 export async function listAvailableModels(): Promise<string[]> {

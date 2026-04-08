@@ -1,21 +1,19 @@
-import { motion } from 'motion/react';
 import { CheckCircle2, XCircle, ChevronRight } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { ValidationResult } from '../types';
 
 interface FeedbackProps {
   validation: ValidationResult;
+  userAnswer?: string;
   onNext: () => void;
 }
 
-export function Feedback({ validation, onNext }: FeedbackProps) {
+export function Feedback({ validation, userAnswer, onNext }: FeedbackProps) {
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
+    <div
       className={cn(
-        "rounded-[32px] p-8 border shadow-lg",
-        validation.isCorrect ? "bg-green-950 border-green-800" : "bg-red-950 border-red-800"
+        "rounded-2xl p-6",
+        validation.isCorrect ? "bg-green-950/50" : "bg-red-950/50"
       )}
     >
       <div className="flex items-start gap-4 mb-6">
@@ -37,6 +35,16 @@ export function Feedback({ validation, onNext }: FeedbackProps) {
         </div>
       </div>
 
+      {userAnswer && (
+        <div className="mb-6">
+          <span className="text-xs uppercase font-bold tracking-widest opacity-60 block mb-2 text-[#9A9A80]">Your answer</span>
+          {validation.isCorrect
+            ? <p className="text-xl text-green-300/80">{userAnswer}</p>
+            : <p className="text-xl text-red-300/80 line-through decoration-red-500/40">{userAnswer}</p>
+          }
+        </div>
+      )}
+
       {!validation.isCorrect && (
         <div className="mb-6">
           <span className="text-xs uppercase font-bold tracking-widest opacity-60 block mb-2 text-[#9A9A80]">Correction</span>
@@ -44,10 +52,12 @@ export function Feedback({ validation, onNext }: FeedbackProps) {
         </div>
       )}
 
-      <div className="mb-6">
-        <span className="text-xs uppercase font-bold tracking-widest opacity-60 block mb-2 text-[#9A9A80]">Explanation</span>
-        <p className="text-[#9A9A80] leading-relaxed">{validation.explanation}</p>
-      </div>
+      {validation.explanation && (
+        <div className="mb-6">
+          <span className="text-xs uppercase font-bold tracking-widest opacity-60 block mb-2 text-[#9A9A80]">Explanation</span>
+          <p className="text-[#9A9A80] leading-relaxed">{validation.explanation}</p>
+        </div>
+      )}
 
       {validation.highlightedErrors.length > 0 && (
         <div className="flex flex-wrap gap-3">
@@ -61,10 +71,10 @@ export function Feedback({ validation, onNext }: FeedbackProps) {
 
       <button
         onClick={onNext}
-        className="mt-8 w-full py-4 bg-[#E5E5E0] text-[#0F0F0F] rounded-2xl font-bold hover:bg-white transition-all flex items-center justify-center gap-2"
+        className="mt-6 w-full py-4 bg-[#E5E5E0] text-[#0F0F0F] rounded-2xl font-bold hover:bg-white transition-all flex items-center justify-center gap-2"
       >
         Next Exercise <ChevronRight size={20} />
       </button>
-    </motion.div>
+    </div>
   );
 }
