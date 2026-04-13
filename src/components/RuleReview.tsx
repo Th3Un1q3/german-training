@@ -18,17 +18,17 @@ export function RuleReview({ ruleInfo, loading, onStart, onCancel }: RuleReviewP
         animate={{ opacity: 1, y: 0 }}
         className="max-w-3xl w-full bg-[#1A1A1A] rounded-[32px] p-10 shadow-xl border border-[#2A2A2A]"
       >
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-[#8A8A60] rounded-full flex items-center justify-center text-white">
+        <div className="flex items-center justify-between gap-3 mb-8">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-12 h-12 bg-[#8A8A60] rounded-full flex items-center justify-center text-white flex-shrink-0">
               <Info size={24} />
             </div>
             <h1 className="text-3xl font-bold text-[#E5E5E0]">{ruleInfo.title}</h1>
           </div>
-            <div className="flex items-center gap-2">
-              <GitHubLink />
-              <button onClick={onCancel} className="text-[#9A9A80] hover:text-[#E5E5E0]">Cancel</button>
-            </div>
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <GitHubLink />
+            <button onClick={onCancel} className="text-[#9A9A80] hover:text-[#E5E5E0]">Cancel</button>
+          </div>
         </div>
 
         <div className="grid md:grid-cols-2 gap-8 mb-10">

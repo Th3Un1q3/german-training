@@ -178,14 +178,14 @@ export function ExerciseView({
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <header className="flex items-center justify-between mb-8">
-          <div className="flex items-center gap-3 cursor-pointer" onClick={onResetSession}>
-            <div className="w-10 h-10 bg-[#8A8A60] rounded-full flex items-center justify-center text-white">
+          <div className="flex items-center gap-3 cursor-pointer min-w-0" onClick={onResetSession}>
+            <div className="w-10 h-10 bg-[#8A8A60] rounded-full flex items-center justify-center text-white flex-shrink-0">
               <BookOpen size={20} />
             </div>
-            <span className="font-bold text-xl">German Tutor</span>
+            <span className="hidden sm:inline font-bold text-xl">German Tutor</span>
           </div>
-          <div className="flex items-center gap-4">
-            <GitHubLink />
+          <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
+            <span className="hidden sm:inline-flex"><GitHubLink /></span>
             <button
               onClick={onShowSettings}
               className="p-2 rounded-full bg-[#1A1A1A] border border-[#2A2A2A] text-[#9A9A80] hover:bg-[#252525] transition-all"
@@ -203,7 +203,7 @@ export function ExerciseView({
             >
               <HelpCircle size={20} />
             </button>
-            <span className="px-4 py-2 bg-[#1A1A1A] rounded-full border border-[#2A2A2A] text-sm font-medium text-[#9A9A80]">
+            <span className="hidden sm:inline-flex px-4 py-2 bg-[#1A1A1A] rounded-full border border-[#2A2A2A] text-sm font-medium text-[#9A9A80]">
               {sessionConfig.topic}
             </span>
             <span className="px-4 py-2 bg-[#1A1A1A] rounded-full border border-[#2A2A2A] text-sm font-medium text-[#9A9A80]">
@@ -286,7 +286,7 @@ export function ExerciseView({
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
               >
-                <div className="flex gap-2 mb-10 p-1 bg-[#141414] rounded-2xl w-fit">
+                <div className="flex gap-2 mb-10 p-1 bg-[#141414] rounded-2xl w-full sm:w-fit">
                   {([
                     { id: 'speech' as Mode, icon: Mic, label: 'Speech' },
                     { id: 'scramble' as Mode, icon: LayoutGrid, label: 'Word Order' },
@@ -297,7 +297,7 @@ export function ExerciseView({
                       onClick={() => handleModeChange(m.id)}
                       disabled={busy}
                       className={cn(
-                        "flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-medium transition-all",
+                        "flex flex-1 sm:flex-none items-center justify-center gap-2 px-3 sm:px-6 py-3 rounded-xl text-sm font-medium transition-all",
                         mode === m.id ? "bg-[#252525] shadow-sm text-[#E5E5E0]" : "text-[#9A9A80] hover:text-[#E5E5E0]",
                         busy && "opacity-50 cursor-not-allowed"
                       )}
