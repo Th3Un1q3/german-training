@@ -36,8 +36,10 @@ export default function App() {
 
   const { recentTopics, addTopic, removeTopic } = useRecentTopics();
 
-  // Prevents concurrent background preload fetches
-  const preloadingRef = useRef(false);
+  // Tracks the in-flight background preload promise (null when idle).
+  // Storing the promise (rather than a boolean flag) lets fallback paths await
+  // it directly instead of firing a duplicate request.
+  const preloadPromiseRef = useRef<Promise<Exercise[]> | null>(null);
 
   // --- Helpers ---
   const resetSession = () => {
@@ -96,7 +98,7 @@ export default function App() {
   // exercises (current + queue) is below the buffer OR below what's needed to
   // finish the session — whichever is smaller.
   const triggerPreload = (currentQueue: Exercise[], used: string[]) => {
-    if (preloadingRef.current || !sessionConfig) return;
+    if (preloadPromiseRef.current !== null || !sessionConfig) return;
 
     const answered = results.length; // exercises already completed
     const remaining = sessionConfig.totalExercises - answered;
@@ -110,14 +112,16 @@ export default function App() {
     // don't make many tiny single-exercise fetches when the buffer is nearly full.
     const batchSize = Math.min(PRELOAD_BUFFER, remaining);
 
-    preloadingRef.current = true;
-    generateExercise(sessionConfig.topic, used, batchSize, sessionConfig.ruleInfo)
+    const promise = generateExercise(sessionConfig.topic, used, batchSize, sessionConfig.ruleInfo);
+    preloadPromiseRef.current = promise;
+
+    promise
       .then(exercises => {
         setExerciseQueue(q => [...q, ...exercises]);
         setUsedSentences(prev => [...new Set([...prev, ...exercises.map(e => e.english)])]);
       })
       .catch(() => {}) // silent — demand-path fallbacks handle errors
-      .finally(() => { preloadingRef.current = false; });
+      .finally(() => { preloadPromiseRef.current = null; });
   };
 
   // Preload while the user reads the rule review page
@@ -173,13 +177,16 @@ export default function App() {
     } else {
       // Preload didn't finish in time — stay on rule review with loading spinner
       // until exercises are ready to avoid a blank screen flash.
+      // Await the in-flight preload if one exists rather than firing a duplicate request.
       setLoading(true);
       try {
-        const exercises = await generateExercise(topic, usedSentences, 3, sessionConfig?.ruleInfo);
+        const exercises = preloadPromiseRef.current
+          ? await preloadPromiseRef.current
+          : await generateExercise(topic, usedSentences, 3, sessionConfig?.ruleInfo);
         setIsRuleReview(false);
         setCurrentExercise(exercises[0]);
         setExerciseQueue(exercises.slice(1));
-        setUsedSentences(exercises.map(e => e.english));
+        setUsedSentences(prev => [...new Set([...prev, ...exercises.map(e => e.english)])]);
       } catch (error: any) {
         handleApiError(error, "Failed to load exercises. Please try again.");
       } finally {
@@ -205,10 +212,13 @@ export default function App() {
         setCurrentExercise(newQueue.shift()!);
         setExerciseQueue(newQueue);
       } else {
-        // Preload didn't finish in time — generate now (fallback)
+        // Preload didn't finish in time — generate now (fallback).
+        // Await the in-flight preload if one exists rather than firing a duplicate request.
         setLoading(true);
         try {
-          const exercises = await generateExercise(sessionConfig!.topic, usedSentences, 3, sessionConfig?.ruleInfo);
+          const exercises = preloadPromiseRef.current
+            ? await preloadPromiseRef.current
+            : await generateExercise(sessionConfig!.topic, usedSentences, 3, sessionConfig?.ruleInfo);
           setCurrentExercise(exercises[0]);
           setExerciseQueue(exercises.slice(1));
           setUsedSentences(prev => [...new Set([...prev, ...exercises.map(e => e.english)])]);
