@@ -163,18 +163,20 @@ export default function App() {
     setResults([]);
     setCurrentExerciseIndex(0);
     setIsSessionComplete(false);
-    setIsRuleReview(false);
 
     if (exerciseQueue.length > 0) {
       // Preloaded during rule review — instant start, no spinner
       const [first, ...rest] = exerciseQueue;
+      setIsRuleReview(false);
       setCurrentExercise(first);
       setExerciseQueue(rest);
     } else {
-      // Preload didn't finish in time — generate now (fallback)
+      // Preload didn't finish in time — stay on rule review with loading spinner
+      // until exercises are ready to avoid a blank screen flash.
       setLoading(true);
       try {
         const exercises = await generateExercise(topic, usedSentences, 3, sessionConfig?.ruleInfo);
+        setIsRuleReview(false);
         setCurrentExercise(exercises[0]);
         setExerciseQueue(exercises.slice(1));
         setUsedSentences(exercises.map(e => e.english));
