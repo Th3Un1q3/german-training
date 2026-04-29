@@ -205,7 +205,6 @@ export async function generateExercise(topic: string, usedSentences: string[] = 
     }
     return newArr;
   };
-
   const stripPunctuation = (s: string) => s.replace(/[.,!?;:"""''`…–—]/g, '').trim();
 
   return data.map((item: any) => {
@@ -213,17 +212,43 @@ export async function generateExercise(topic: string, usedSentences: string[] = 
     const cleanGerman = item.german.replace(/[.!?]+$/, '').trim();
     const words = cleanGerman.split(/\s+/).filter(Boolean).map(stripPunctuation).filter(Boolean);
 
-    // Build candidates: correct word + distractors, with safety fallbacks
-    const candidates = words.map((word: string, i: number) => {
-      let dists: string[] = (item.distractors?.[i] || [])
-        .map(stripPunctuation)
-        .filter((d: string) => d && d !== word); // remove empty and duplicates of the correct word
+    // Prepare a sanitized, deduplicated pool of all distractors across positions
+    const distractorListsFromAI: any[] = (item.distractors || []) as any[];
+    const flattenedSanitizedDistractors: string[] = Array.from(
+      new Set(
+        distractorListsFromAI
+          .flat()
+          .map(stripPunctuation)
+          .filter((d: string) => !!d)
+      )
+    );
 
-      // Pad to 5 if AI returned fewer
-      while (dists.length < 5) dists.push(`${word}x${dists.length + 1}`);
-      dists = dists.slice(0, 5);
-      
-      return shuffle([word, ...dists]);
+    // Build candidates immutably for each word position, with concise fallbacks
+    const candidates = words.map((correctWord: string, positionIndex: number) => {
+      const sanitizedInitialDistractors: string[] = ((item.distractors?.[positionIndex] || []) as string[])
+        .map(stripPunctuation)
+        .filter((d: string) => !!d && d !== correctWord);
+
+      const poolExcludingInitialAndCorrect: string[] = flattenedSanitizedDistractors
+        .filter((candidateDistractor) => candidateDistractor !== correctWord && !sanitizedInitialDistractors.includes(candidateDistractor));
+
+      const shuffledPoolExcludingInitialAndCorrect = shuffle(poolExcludingInitialAndCorrect);
+
+      const numberNeeded = Math.max(0, 5 - sanitizedInitialDistractors.length);
+
+      const additionalDistractorsFromPool: string[] = shuffledPoolExcludingInitialAndCorrect.slice(0, numberNeeded);
+
+      const combinedDistractors: string[] = Array.from(
+        new Set(sanitizedInitialDistractors.concat(additionalDistractorsFromPool))
+      ).slice(0, 5);
+
+      const finalDistractors: string[] = combinedDistractors.length === 5
+        ? combinedDistractors
+        : combinedDistractors.concat(
+            Array.from({ length: 5 - combinedDistractors.length }, () => `${correctWord}${Math.random().toString(36).substring(2, 6)}`)
+          ).slice(0, 5);
+
+      return shuffle([correctWord, ...finalDistractors]);
     });
 
     return {
