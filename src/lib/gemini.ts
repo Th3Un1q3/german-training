@@ -117,7 +117,8 @@ export async function generateRuleInfo(topic: string): Promise<RuleInfo> {
                   }
                 }
               }
-            }
+            },
+            required: ["nuances", "useCases", "examples"]
           },
           exerciseDesign: {
             type: Type.OBJECT,
